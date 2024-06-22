@@ -1,7 +1,7 @@
 package com.example.layeredarchitecture.controller;
 
-import com.example.layeredarchitecture.dao.CustomerDAO;
-import com.example.layeredarchitecture.dao.CustomerDAOimpl;
+import com.example.layeredarchitecture.bo.custom.CustomerBO;
+import com.example.layeredarchitecture.bo.custom.impl.CustomerBOImpl;
 import com.example.layeredarchitecture.model.CustomerDTO;
 import com.example.layeredarchitecture.view.tdm.CustomerTM;
 import com.jfoenix.controls.JFXButton;
@@ -37,7 +37,7 @@ public class ManageCustomersFormController {
     public TextField txtCustomerAddress;
     public TableView<CustomerTM> tblCustomers;
     public JFXButton btnAddNewCustomer;
-    public CustomerDAO customerDAO=new CustomerDAOimpl();
+    public CustomerBO customerBO =new CustomerBOImpl();
 
     public void initialize() {
         tblCustomers.getColumns().get(0).setCellValueFactory(new PropertyValueFactory<>("id"));
@@ -74,8 +74,8 @@ public class ManageCustomersFormController {
             Statement stm = connection.createStatement();
             ResultSet rst = stm.executeQuery("SELECT * FROM Customer");*/
 
-             customerDAO=new CustomerDAOimpl();
-            ArrayList<CustomerDTO> customerDTOS = customerDAO.loadAllCustomers();
+
+            ArrayList<CustomerDTO> customerDTOS = customerBO.loadAllcustomer();
 
             for (CustomerDTO customerDTO : customerDTOS) {
                 tblCustomers.getItems().add(new CustomerTM(customerDTO.getId(),customerDTO.getName(),customerDTO.getAddress()));
@@ -161,7 +161,7 @@ public class ManageCustomersFormController {
 
                 CustomerDTO customerDTO = new CustomerDTO(id, name, address);
 
-                customerDAO.saveCustomer(customerDTO);
+                customerBO.saveCustomer(customerDTO);
 
                 tblCustomers.getItems().add(new CustomerTM(id, name, address));
             } catch (SQLException e) {
@@ -185,7 +185,7 @@ public class ManageCustomersFormController {
                 pstm.executeUpdate();*/
 
 
-                customerDAO.updateCustomer(id, name, address);
+                customerBO.updateCustomer(new CustomerDTO(id, name, address));
 
             } catch (SQLException e) {
                 new Alert(Alert.AlertType.ERROR, "Failed to update the customer " + id + e.getMessage()).show();
@@ -208,7 +208,7 @@ public class ManageCustomersFormController {
         pstm.setString(1, id);*/
 
 
-        return customerDAO.existCustomer(id);
+        return customerBO.existCustomer(id);
     }
 
 
@@ -225,7 +225,7 @@ public class ManageCustomersFormController {
             pstm.executeUpdate();*/
 
 
-            customerDAO.deleteCustomer(id);
+            customerBO.deleteCustomer(id);
 
             tblCustomers.getItems().remove(tblCustomers.getSelectionModel().getSelectedItem());
             tblCustomers.getSelectionModel().clearSelection();
@@ -243,15 +243,8 @@ public class ManageCustomersFormController {
 /*            Connection connection = DBConnection.getDbConnection().getConnection();
             ResultSet rst = connection.createStatement().executeQuery("SELECT id FROM Customer ORDER BY id DESC LIMIT 1;");*/
 
-            ResultSet rst = customerDAO.generateNewId();
+            return customerBO.generateNewId();
 
-            if (rst.next()) {
-                String id = rst.getString("id");
-                int newCustomerId = Integer.parseInt(id.replace("C00-", "")) + 1;
-                return String.format("C00-%03d", newCustomerId);
-            } else {
-                return "C00-001";
-            }
         } catch (SQLException e) {
             new Alert(Alert.AlertType.ERROR, "Failed to generate a new id " + e.getMessage()).show();
         } catch (ClassNotFoundException e) {
